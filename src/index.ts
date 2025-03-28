@@ -144,4 +144,21 @@ const answerQuestion = async (question: string) => {
 	}
 };
 
+const mergeHistory = async (question: string, history: string) => {
+	const prompt = mergeTemplate
+		.replace('${question}', question)
+		.replace('${history}', history);
+	return await completePrompt(prompt);
+};
+
 // Function to handle user input and execute the appropriate tool
+let history = '';
+while (true) {
+	let question = await rl.question('How can I assist you? ');
+	if (history.length > 0) {
+		question = await mergeHistory(question, history);
+	}
+	const answer = await answerQuestion(question);
+	console.log('🚀 ~ answer:', chalk.blueBright(answer));
+	history += `Q: ${question}\nA: ${answer}\n`;
+}
