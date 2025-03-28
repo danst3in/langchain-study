@@ -76,23 +76,30 @@ const tools: Tools = {
 //  use ollama with //TODO choose model to complete a given prompt
 const completePrompt = async (prompt: string) => {
 	const selectedModel = 'llama3.1:8b';
-	const response = await ollama.generate({
-		format: 'json',
-		model: selectedModel,
-		options: {
-			stop: ['Observations:'],
-			temperature: 0.7, // Adjust as needed higher for creativity vs. lower for accuracy
-		},
-		prompt,
-		stream: false,
-	});
-	console.log('🚀 ~ completePrompt ~ prompt:', chalk.red(prompt));
-	console.log('🚀 ~ completePrompt ~ response:', chalk.green(response));
-	console.log(
-		'🚀 ~ completePrompt ~ response.response:',
-		chalk.green(response.response as string),
-	);
-	return response;
+
+	try {
+		const { response } = await ollama.generate({
+			format: 'json',
+			model: selectedModel,
+			options: {
+				stop: ['Observations:'],
+				temperature: 0.7, // Adjust as needed higher for creativity vs. lower for accuracy
+			},
+			prompt,
+			stream: false,
+		});
+		console.log('🚀 ~ completePrompt ~ prompt:', chalk.red(prompt));
+		console.log('🚀 ~ completePrompt ~ response:', chalk.green(response));
+		console.log('🚀 ~ completePrompt ~ response:', chalk.green(response));
+		return response;
+	} catch (error: unknown) {
+		if (error instanceof Error) {
+			console.error(chalk.red(`Error in completePrompt: ${error.message}`));
+		} else {
+			console.error(chalk.red(`Unknown error in completePrompt: ${error}`));
+		}
+		throw new Error('Error in completePrompt: Unknown error occurred.');
+	}
 };
 
 const answerQuestion = async (question: string) => {
@@ -104,6 +111,37 @@ const answerQuestion = async (question: string) => {
 			.join('\n'),
 	);
 	// TODO: Add iteration loop for multiple attempts to complete answer
+
+	while (true) {
+		try {
+			const response = await completePrompt(prompt);
+			//  add response to existing prompt
+			prompt += response;
+
+			const action = response.match(/Action: (.+)/)?.[1];
+			if (action) {
+				// execute action based on the response of LLM
+				const actionMatch = response.match(/Action Input: "?(.*)"?/);
+				if (actionMatch && actionMatch[1]) {
+					const actionInput = actionMatch[1];
+					const result = await tools[action.trim()].execute(actionInput);
+					prompt += `Observation: ${result}\n`;
+				} else {
+					throw new Error('No action input provided');
+				}
+			} else {
+				// continue with the loop if there is no action
+				return response.match(/Final Answer: (.*)/)?.[1];
+			}
+		} catch (error: unknown) {
+			if (error instanceof Error) {
+				console.error(chalk.red(`Error in answerQuestion: ${error.message}`));
+			} else {
+				console.error(chalk.red(`Unknown error in answerQuestion: ${error}`));
+			}
+			throw new Error('Error in answerQuestion: Unknown error occurred.');
+		}
+	}
 };
 
 // Function to handle user input and execute the appropriate tool
