@@ -1,0 +1,41 @@
+{
+  "name": "langchain-study",
+  "version": "1.0.0",
+  "description": "disect how langchain ReAct prompt cycle works",
+  "exports": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Dan Stein",
+  "license": "ISC",
+  "devDependencies": {
+    "@eslint/js": "^9.23.0",
+    "@types/cors": "^2.8.17",
+    "@types/mongoose": "^5.11.97",
+    "@types/node": "^22.13.14",
+    "@types/node-fetch": "^2.6.12",
+    "eslint": "^9.23.0",
+    "eslint-config-prettier": "10.1.1",
+    "globals": "^16.0.0",
+    "langchain": "^0.3.19",
+    "neo4j-driver": "^5.28.1",
+    "prettier": "3.5.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.28.0"
+  },
+  "dependencies": {
+    "@apollo/server": "^4.11.3",
+    "@neo4j/graphql": "^6.5.3",
+    "@neo4j/introspector": "^4.0.1",
+    "express": "^4.21.2",
+    "graphql": "^16.10.0",
+    "graphql-request": "^7.1.2",
+    "graphql-tag": "^2.12.6",
+    "mongoose": "^8.13.0",
+    "node-nlp": "^5.0.0-alpha.5",
+    "puppeteer": "^24.4.0",
+    "type-graphql": "^2.0.0-rc.2"
+  }
+}
