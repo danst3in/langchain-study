@@ -43,6 +43,7 @@
     "mongoose": "^8.13.0",
     "node-nlp": "^5.0.0-alpha.5",
     "puppeteer": "^24.4.0",
+    "serpapi": "^2.1.0",
     "type-graphql": "^2.0.0-rc.2"
   }
 }
