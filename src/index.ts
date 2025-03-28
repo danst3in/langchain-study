@@ -3,6 +3,8 @@ import { Parser } from 'expr-eval';
 import { getJson } from 'serpapi';
 import * as readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
+import ollama from 'ollama';
+import chalk from 'chalk';
 
 const rl = readline.createInterface({ input, output });
 
@@ -38,3 +40,70 @@ const googleSearch = async (query: string): Promise<string> => {
 		return 'Error in search';
 	}
 };
+
+// tools for the agent to utilize
+interface Tool {
+	description: string;
+	execute: (input: string) => string | Promise<string>; // Adjust the return type as needed
+}
+
+type Tools = { [key: string]: Tool };
+
+const tools: Tools = {
+	search: {
+		description:
+			'a search engine. useful when you need to answer questions about current events, provide information, or help with tasks by searching the internet. input should be a search query', // Searches Google for a given query and returns the answer.',
+		execute: googleSearch,
+	},
+	calculator: {
+		description:
+			'a calculator. useful when you need to perform mathematical calculations.', // Evaluates a mathematical expression and returns the result.',
+		execute: (input: string) => Parser.evaluate(input).toString(),
+	},
+	// weather: {
+	// 	description: 'provides current weather information for a given location.', // Fetches current weather data from an API and returns it.
+	// 	execute: async (location: string) => {
+	// 		const apiKey = 'YOUR_API_KEY'; // Replace with your actual API key
+	// 		const response = await fetch(
+	// 			`https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${apiKey}`,
+	// 		);
+	// 		const data = await response.json();
+	// 		return `Current weather in ${data.name}: ${data.weather[0].description}, temperature: ${data.main.temp}K`;
+	// 	},
+	// Add more tools as needed
+};
+
+//  use ollama with //TODO choose model to complete a given prompt
+const completePrompt = async (prompt: string) => {
+	const selectedModel = 'llama3.1:8b';
+	const response = await ollama.generate({
+		format: 'json',
+		model: selectedModel,
+		options: {
+			stop: ['Observations:'],
+			temperature: 0.7, // Adjust as needed higher for creativity vs. lower for accuracy
+		},
+		prompt,
+		stream: false,
+	});
+	console.log('🚀 ~ completePrompt ~ prompt:', chalk.red(prompt));
+	console.log('🚀 ~ completePrompt ~ response:', chalk.green(response));
+	console.log(
+		'🚀 ~ completePrompt ~ response.response:',
+		chalk.green(response.response as string),
+	);
+	return response;
+};
+
+const answerQuestion = async (question: string) => {
+	// construct the prompt with the question and tools that the agentic chain can use
+	let prompt = promptTemplate.replace('${question}', question).replace(
+		'${tools}',
+		Object.keys(tools)
+			.map((toolName) => `${toolName}: ${tools[toolName].description}`)
+			.join('\n'),
+	);
+	// TODO: Add iteration loop for multiple attempts to complete answer
+};
+
+// Function to handle user input and execute the appropriate tool
