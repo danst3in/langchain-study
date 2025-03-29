@@ -29,9 +29,11 @@ const googleSearch = async (query: string): Promise<string> => {
 
 		return (
 			// different response types from Google can have different structures, so we need to check for each one
-			googleSearchResponse.answer_box?.answer ||
-			googleSearchResponse.answer_box?.snippet ||
-			googleSearchResponse.organic_results?.[0]?.snippet ||
+			/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+			(googleSearchResponse.answer_box?.answer as string) ||
+			(googleSearchResponse.answer_box?.snippet as string) ||
+			(googleSearchResponse.organic_results[0]?.snippet as string) ||
+			/* eslint-enable @typescript-eslint/no-unsafe-member-access */
 			'No answer found'
 		);
 	} catch (error: unknown) {
@@ -100,7 +102,7 @@ const completePrompt = async (prompt: string) => {
 		if (error instanceof Error) {
 			console.error(chalk.red(`Error in completePrompt: ${error.message}`));
 		} else {
-			console.error(chalk.red(`Unknown error in completePrompt: ${error}`));
+			console.error(chalk.red(`Unknown error in completePrompt: `, error));
 		}
 		throw new Error('Error in completePrompt: Unknown error occurred.');
 	}
@@ -116,6 +118,8 @@ const answerQuestion = async (question: string) => {
 	);
 	// console.log('🚀 ~ answerQuestion ~ prompt:', prompt);
 
+	// Infinite loop on purpose to keep chat running after each session
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	while (true) {
 		try {
 			const response = await completePrompt(prompt);
@@ -144,13 +148,19 @@ const answerQuestion = async (question: string) => {
 				}
 			} else {
 				// continue with the loop if there is no action
-				return response.match(/Final Answer: (.*)/)?.[1];
+				const finalAnswer = response.match(/Final Answer: (.*)/);
+				const finalAnswerMatch = finalAnswer != null && finalAnswer[1];
+				if (finalAnswer && finalAnswerMatch) {
+					return finalAnswerMatch;
+				} else {
+					throw new Error("Expected 'Final Answer:' not found in response");
+				}
 			}
 		} catch (error: unknown) {
 			if (error instanceof Error) {
 				console.error(chalk.red(`Error in answerQuestion: ${error.message}`));
 			} else {
-				console.error(chalk.red(`Unknown error in answerQuestion: ${error}`));
+				console.error(chalk.red(`Unknown error in answerQuestion: `, error));
 			}
 			throw new Error('Error in answerQuestion: Unknown error occurred.');
 		}
@@ -166,6 +176,8 @@ const mergeHistory = async (question: string, history: string) => {
 
 // Function to handle user input and execute the appropriate tool
 let history = '';
+// Infinite loop on purpose to keep chat running after each session
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 while (true) {
 	let question = await rl.question('How can I assist you? ');
 	if (history.length > 0) {
