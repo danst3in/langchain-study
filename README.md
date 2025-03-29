@@ -54,3 +54,4 @@ This project uses the following libraries:
     ```bash
     npm run dev
     ```
+4. **Exit the application by pressing `Ctrl+c` to exit gracefully when you are done. (May require pressing `Ctrl+c` twice on some systems due to pending I/O operations.)**

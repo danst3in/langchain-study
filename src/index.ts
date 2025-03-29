@@ -26,10 +26,7 @@ const googleSearch = async (query: string): Promise<string> => {
 			q: query,
 			api_key: APIKEY,
 		});
-		// const response = await fetch(
-		// 	`https://serpapi.com/search.json?q=${query}&key=${apiKey}`,
-		// );
-		// const data = await response.json();
+
 		return (
 			// different response types from Google can have different structures, so we need to check for each one
 			googleSearchResponse.answer_box?.answer ||
@@ -79,7 +76,7 @@ const tools: Tools = {
 	// Add more tools as needed
 };
 
-//  use ollama with //TODO choose model to complete a given prompt
+//  use ollama with local model
 const completePrompt = async (prompt: string) => {
 	// const selectedModel = 'qwen2.5-coder:32b-instruct-fp16';
 	const selectedModel = 'qwen2.5-coder:7b-instruct-fp16';
@@ -117,8 +114,7 @@ const answerQuestion = async (question: string) => {
 			.map((toolName) => `${toolName}: ${tools[toolName].description}`)
 			.join('\n'),
 	);
-	console.log('🚀 ~ answerQuestion ~ prompt:', prompt);
-	// TODO: Add iteration loop for multiple attempts to complete answer
+	// console.log('🚀 ~ answerQuestion ~ prompt:', prompt);
 
 	while (true) {
 		try {
@@ -138,6 +134,10 @@ const answerQuestion = async (question: string) => {
 				if (actionMatch && actionMatch[1]) {
 					const actionInput = actionMatch[1];
 					const result = await tools[action.trim()].execute(actionInput);
+					console.log(
+						'🚀 ~ answerQuestion ~ tool action result:',
+						chalk.blue(result),
+					);
 					prompt += `Observation: ${result}\n`;
 				} else {
 					throw new Error('No action input provided');
