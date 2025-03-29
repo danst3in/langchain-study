@@ -5,18 +5,24 @@ import * as readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import ollama from 'ollama';
 import chalk from 'chalk';
+import path from 'node:path';
 
 const rl = readline.createInterface({ input, output });
 
-const promptTemplate = fs.readFileSync('prompt_template.txt', 'utf-8');
-const mergeTemplate = fs.readFileSync('merge_template.txt', 'utf-8');
-
+const promptTemplate = fs.readFileSync(
+	path.resolve(import.meta.dirname, './prompt_template.txt'),
+	'utf-8',
+);
+const mergeTemplate = fs.readFileSync(
+	path.resolve(import.meta.dirname, './merge_template.txt'),
+	'utf-8',
+);
 // Answer question using serpapi google search api
 const googleSearch = async (query: string): Promise<string> => {
 	try {
 		const APIKEY = process.env.SERPAPI_API_KEY as string;
 		if (!APIKEY) throw new Error('SerpApi API key not found');
-		const googleSearchResponse = await getJson('google_search', {
+		const googleSearchResponse = await getJson('google', {
 			q: query,
 			api_key: APIKEY,
 		});
@@ -44,7 +50,7 @@ const googleSearch = async (query: string): Promise<string> => {
 // tools for the agent to utilize
 interface Tool {
 	description: string;
-	execute: (input: string) => string | Promise<string>; // Adjust the return type as needed
+	execute: (input: string) => string | Promise<string>;
 }
 
 type Tools = { [key: string]: Tool };
@@ -57,7 +63,7 @@ const tools: Tools = {
 	},
 	calculator: {
 		description:
-			'a calculator. useful when you need to perform mathematical calculations.', // Evaluates a mathematical expression and returns the result.',
+			'a calculator. useful when you need to perform mathematical calculations. The input to this tool should be a valid mathematical expression that could be executed by a simple calculator.', // Evaluates a mathematical expression and returns the result.',
 		execute: (input: string) => Parser.evaluate(input).toString(),
 	},
 	// weather: {
@@ -75,21 +81,22 @@ const tools: Tools = {
 
 //  use ollama with //TODO choose model to complete a given prompt
 const completePrompt = async (prompt: string) => {
-	const selectedModel = 'llama3.1:8b';
+	// const selectedModel = 'qwen2.5-coder:32b-instruct-fp16';
+	const selectedModel = 'qwen2.5-coder:7b-instruct-fp16';
+	// const selectedModel = 'llama3.1:8b';
 
 	try {
 		const { response } = await ollama.generate({
-			format: 'json',
+			// format: 'json',
 			model: selectedModel,
 			options: {
-				stop: ['Observations:'],
+				stop: ['Observation:'],
 				temperature: 0.7, // Adjust as needed higher for creativity vs. lower for accuracy
 			},
 			prompt,
 			stream: false,
 		});
 		console.log('🚀 ~ completePrompt ~ prompt:', chalk.red(prompt));
-		console.log('🚀 ~ completePrompt ~ response:', chalk.green(response));
 		console.log('🚀 ~ completePrompt ~ response:', chalk.green(response));
 		return response;
 	} catch (error: unknown) {
@@ -110,6 +117,7 @@ const answerQuestion = async (question: string) => {
 			.map((toolName) => `${toolName}: ${tools[toolName].description}`)
 			.join('\n'),
 	);
+	console.log('🚀 ~ answerQuestion ~ prompt:', prompt);
 	// TODO: Add iteration loop for multiple attempts to complete answer
 
 	while (true) {
@@ -119,9 +127,14 @@ const answerQuestion = async (question: string) => {
 			prompt += response;
 
 			const action = response.match(/Action: (.+)/)?.[1];
+			console.log('🚀 ~ answerQuestion ~ action:', chalk.blue(action));
 			if (action) {
 				// execute action based on the response of LLM
 				const actionMatch = response.match(/Action Input: "?(.*)"?/);
+				console.log(
+					'🚀 ~ answerQuestion ~ actionMatch:',
+					chalk.blue(actionMatch),
+				);
 				if (actionMatch && actionMatch[1]) {
 					const actionInput = actionMatch[1];
 					const result = await tools[action.trim()].execute(actionInput);

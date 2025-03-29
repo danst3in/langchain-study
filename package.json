@@ -5,10 +5,9 @@
   "exports": "./src/index.ts",
   "type": "module",
   "scripts": {
-    "start": "tsx --env-file=.env.local src/index.ts",
+    "start": "tsx --env-file=.env src/index.ts",
     "build": "tsc -b",
-    "dev": "tsx --env-file=.env.local --watch ./src/index.ts",
-    "server": "tsx --env-file=.env.local --watch ./server/server.ts",
+    "dev": "tsx --env-file=.env --watch ./src/index.ts",
     "format": "npm run eslint -- --fix && npm run prettier -- --write",
     "lint": "npm run eslint && npm run prettier && tsc --noEmit",
     "prettier": "prettier --config .prettierrc.json '**/*.{css,g?(raph)ql,js,json,jsx,html,md,less,sass,scss,ts,tsx,y?(a)ml}' --check",
